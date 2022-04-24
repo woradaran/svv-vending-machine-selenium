@@ -59,7 +59,7 @@ public class Operation {
     }
 
     public Boolean cancel() {
-        if (state == State.ORDERING || state == State.ERROR_PAY) {
+        if (state == State.ORDERING) {
             state = State.WELCOME;
             return true;
         }

@@ -36,7 +36,7 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Vertex()
     public void WELCOME() {
         System.out.println("Vertex WELCOME");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.elementToBeClickable(By.id("start")));
     }
 
@@ -49,7 +49,7 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Vertex()
     public void ORDERING() {
         System.out.println("Vertex ORDERING");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.visibilityOfElementLocated(By.id("btn_check_out")));
 
         // Check that the number of orders is as expected.
@@ -59,6 +59,11 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
         int numTumPooActual = Integer.parseInt(driver.findElement(By.id("txt_tum_poo")).getAttribute("value"));
         assertEquals(numTumThaiExpected, numTumThaiActual);
         assertEquals(numTumPooExpected, numTumPooActual);
+        // Check the status of the Check-Out button
+        if (numTumThaiExpected+numTumPooExpected>0)
+            assertTrue(driver.findElement(By.id("btn_check_out")).isEnabled());
+        else
+            assertFalse(driver.findElement(By.id("btn_check_out")).isEnabled());
     }
 
     @Edge()
@@ -76,7 +81,7 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Vertex()
     public void ERROR_ORDER() {
         System.out.println("Vertex ERROR_ORDERING");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.alertIsPresent());
     }
 
@@ -96,14 +101,14 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     public void checkOut() {
         System.out.println("Edge checkOut");
         driver.findElement(By.name("btn_check_out")).click();
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.elementToBeClickable(By.name("btn_confirm")));
     }
 
     @Vertex()
     public void CONFIRMING() {
         System.out.println("Vertex CONFIRMING");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.elementToBeClickable(By.name("btn_confirm")));
         // Check that the information shown is as expected.
         int numTumThaiExpected = getAttribute("numTumThai").asInt();
@@ -111,8 +116,8 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
         String totalTumThaiExpected = String.format("%.2f", PRICE_TUM_THAI*numTumThaiExpected);
         String totalTumPooExpected = String.format("%.2f", PRICE_TUM_POO*numTumPooExpected);
         String grandTotalExpected = String.format("%.2f", PRICE_TUM_THAI*numTumThaiExpected+PRICE_TUM_POO*numTumPooExpected);
-        int numTumThaiActual = Integer.valueOf(driver.findElement(By.id("msg_num_tum_thai")).getText());
-        int numTumPooActual = Integer.valueOf(driver.findElement(By.id("msg_num_tum_poo")).getText());
+        int numTumThaiActual = Integer.parseInt(driver.findElement(By.id("msg_num_tum_thai")).getText());
+        int numTumPooActual = Integer.parseInt(driver.findElement(By.id("msg_num_tum_poo")).getText());
         String totalTumThaiActual = driver.findElement(By.id("msg_total_tum_thai")).getText();
         String totalTumPooActual = driver.findElement(By.id("msg_total_tum_poo")).getText();
         String grandTotalActual = driver.findElement(By.id("msg_grand_total")).getText();
@@ -138,7 +143,7 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Vertex()
     public void PAYING() {
         System.out.println("Vertex PAYING");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.elementToBeClickable(By.name("btn_pay")));
         // Check that the total amount is as expected.
         int numTumThaiExpected = getAttribute("numTumThai").asInt();
@@ -146,6 +151,11 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
         String grandTotalExpected = String.format("%.2f", PRICE_TUM_THAI*numTumThaiExpected+PRICE_TUM_POO*numTumPooExpected);
         String grandTotalActual = driver.findElement(By.id("msg_grand_total")).getText();
         assertEquals(grandTotalExpected, grandTotalActual);
+        // Check that payment error message is properly shown
+        if (getLastElement().getName().equals("payRetry"))
+            assertTrue(driver.findElement(By.id("msg_error")).isDisplayed());
+        else
+            assertFalse(driver.findElement(By.id("msg_error")).isDisplayed());
     }
 
     @Edge()
@@ -163,11 +173,17 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Edge()
     public void payError() {
         System.out.println("Edge payError");
+        //Submit blank payment details to simulate payment error
         WebElement txtCreditCardNum = driver.findElement(By.name("txt_credit_card_num"));
         WebElement txtNameOnCard = driver.findElement(By.name("txt_name_on_card"));
         txtCreditCardNum.clear();
         txtNameOnCard.clear();
         driver.findElement(By.name("btn_pay")).click();
+    }
+
+    @Vertex()
+    public void ERROR_PAY() {
+        System.out.println("Vertex ERROR_PAY");
     }
 
     @Edge()
@@ -178,10 +194,8 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Vertex()
     public void COLLECTING() {
         System.out.println("Vertex COLLECTING");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
+        new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.elementToBeClickable(By.tagName("img")));
-        // Wait a bit for images to load
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
 
         // Check that the number of items shown is correct
         int numTumThaiExpected = getAttribute("numTumThai").asInt();
@@ -208,21 +222,21 @@ public class VendingMachineAdapterSelenium extends ExecutionContext {
     @Edge()
     public void collectError() {
         System.out.println("Edge collectError");
-        // Wait for collection timeout
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        // Wait until the clearing page is shown
+        new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(ExpectedConditions.visibilityOfElementLocated(By.id("msg_clearing")));
     }
 
     @Vertex()
     public void ERROR_COLLECT() {
         System.out.println("Vertex ERROR_COLLECT");
-        new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.visibilityOfElementLocated(By.id("msg_clearing")));
     }
 
     @Edge()
     public void cleared() {
         System.out.println("Edge cleared");
-        // Wait for dispensed items to be cleared
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
+        // Wait until redirection to the welcome page
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.elementToBeClickable(By.id("start")));
     }
 }
