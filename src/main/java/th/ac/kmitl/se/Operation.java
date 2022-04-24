@@ -2,11 +2,11 @@ package th.ac.kmitl.se;
 
 public class Operation {
     public enum State {
-        WELCOME, ORDERING, ERROR_ORDER, PAYING, ERROR_PAY, COLLECTING, ERROR_COLLECT
+        WELCOME, ORDERING, ERROR_ORDER, CONFIRMING, PAYING, ERROR_PAY, COLLECTING, ERROR_COLLECT
     }
     State state;
-    static final float PRICE_TUM_THAI = 100;
-    static final float PRICE_TUM_POO = 120;
+    static final float PRICE_TUM_THAI = 100.0f;
+    static final float PRICE_TUM_POO = 120.0f;
     int numTumThai, numTumPoo;
 
     PaymentModule paymentModule;
@@ -50,8 +50,8 @@ public class Operation {
         return false;
     }
 
-    public Boolean ack() {
-        if (state == State.ERROR_ORDER) {
+    public Boolean backToOrder() {
+        if (state == State.ERROR_ORDER || state == State.CONFIRMING) {
             state = State.ORDERING;
             return true;
         }
@@ -66,10 +66,18 @@ public class Operation {
         return false;
     }
 
-    public Boolean confirm() {
+    public Boolean checkOut() {
         if (state == State.ORDERING && numTumPoo+numTumThai > 0) {
+            state = State.CONFIRMING;
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean pay() {
+        if (state == State.CONFIRMING) {
             state = State.PAYING;
-            this.pay();
+            this.doPay();
             return true;
         }
         return false;
@@ -78,18 +86,18 @@ public class Operation {
     public Boolean payRetry() {
         if (state == State.ERROR_PAY) {
             state = State.PAYING;
-            this.pay();
+            this.doPay();
             return true;
         }
         return false;
     }
 
-    private void pay() {
+    private void doPay() {
         float amount = PRICE_TUM_THAI*numTumThai + PRICE_TUM_POO*numTumPoo;
         paymentModule.pay(amount, new PaymentCallback() {
             public void onSuccess() {
                 state = State.COLLECTING;
-                Operation.this.dispense();
+                Operation.this.doDispense();
             }
             public void onError() {
                 state = State.ERROR_PAY;
@@ -97,19 +105,19 @@ public class Operation {
         });
     }
 
-    private void dispense() {
+    private void doDispense() {
         dispenserModule.dispense(numTumThai, numTumPoo, new DispenserCollectCallback() {
                 public void onSuccess() {
                     state = State.WELCOME;
                 }
                 public void onError() {
                     state = State.ERROR_COLLECT;
-                    Operation.this.clear();
+                    Operation.this.doClear();
                 }
         });
     }
 
-    private void clear() {
+    private void doClear() {
         dispenserModule.clear(new DispenserClearCallback() {
                 public void onCleared() {
                     state = State.WELCOME;

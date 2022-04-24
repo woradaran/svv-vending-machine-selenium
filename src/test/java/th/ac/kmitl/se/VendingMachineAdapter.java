@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.mockito.*;
 import static org.mockito.Mockito.*;
 
-@Model(file  = "VendingMachine.json")
+@Model(file  = "VendingMachineV1.json")
 public class VendingMachineAdapter extends ExecutionContext {
     public static int delay = 0;
 
@@ -32,6 +32,8 @@ public class VendingMachineAdapter extends ExecutionContext {
     PaymentCallback paymentCallback;
     DispenserCollectCallback dispenserCollectCallback;
     DispenserClearCallback dispenserClearCallback;
+    static final float PRICE_TUM_THAI = 100.0f;
+    static final float PRICE_TUM_POO = 120.0f;
 
     public VendingMachineAdapter() {
         paymentModule = mock(PaymentModule.class);
@@ -79,7 +81,7 @@ public class VendingMachineAdapter extends ExecutionContext {
     @Edge()
     public void ack() {
         System.out.println("ack");
-        assertTrue(operation.ack());
+        assertTrue(operation.backToOrder());
         assertEquals(Operation.State.ORDERING, operation.state);
     }
 
@@ -91,16 +93,35 @@ public class VendingMachineAdapter extends ExecutionContext {
     }
 
     @Edge()
-    public void confirm() {
-        System.out.println("confirm");
-        assertTrue(operation.confirm());
+    public void checkOut() {
+        System.out.println("checkOut");
+        assertTrue(operation.checkOut());
+        assertEquals(Operation.State.CONFIRMING, operation.state);
+
+        int numTumThaiExpected = getAttribute("numTumThai").asInt();
+        int numTumPooExpected = getAttribute("numTumPoo").asInt();
+        assertEquals(numTumThaiExpected, operation.numTumThai);
+        assertEquals(numTumPooExpected, operation.numTumPoo);
+    }
+
+    @Edge()
+    public void change() {
+        System.out.println("change");
+        assertTrue(operation.backToOrder());
+        assertEquals(Operation.State.ORDERING, operation.state);
+    }
+
+    @Edge()
+    public void pay() {
+        System.out.println("pay");
+        assertTrue(operation.pay());
         assertEquals(Operation.State.PAYING, operation.state);
 
-        int numTumThai = getAttribute("numTumThai").asInt();
-        int numTumPoo = getAttribute("numTumPoo").asInt();
-        float amount = Operation.PRICE_TUM_THAI*numTumThai + Operation.PRICE_TUM_POO*numTumPoo;
+        int numTumThaiExpected = getAttribute("numTumThai").asInt();
+        int numTumPooExpected = getAttribute("numTumPoo").asInt();
+        float amountExpected = PRICE_TUM_THAI*numTumThaiExpected + PRICE_TUM_POO*numTumPooExpected;
         ArgumentCaptor<PaymentCallback> argCallback = ArgumentCaptor.forClass(PaymentCallback.class);
-        verify(paymentModule).pay(eq(amount), argCallback.capture());
+        verify(paymentModule).pay(eq(amountExpected), argCallback.capture());
         paymentCallback = argCallback.getValue();
         clearInvocations(paymentModule);
     }
@@ -118,11 +139,11 @@ public class VendingMachineAdapter extends ExecutionContext {
         assertTrue(operation.payRetry());
         assertEquals(Operation.State.PAYING, operation.state);
 
-        int numTumThai = getAttribute("numTumThai").asInt();
-        int numTumPoo = getAttribute("numTumPoo").asInt();
-        float amount = Operation.PRICE_TUM_THAI*numTumThai + Operation.PRICE_TUM_POO*numTumPoo;
+        int numTumThaiExpected = getAttribute("numTumThai").asInt();
+        int numTumPooExpected = getAttribute("numTumPoo").asInt();
+        float amountExpected = PRICE_TUM_THAI*numTumThaiExpected + PRICE_TUM_POO*numTumPooExpected;
         ArgumentCaptor<PaymentCallback> argCallback = ArgumentCaptor.forClass(PaymentCallback.class);
-        verify(paymentModule).pay(eq(amount), argCallback.capture());
+        verify(paymentModule).pay(eq(amountExpected), argCallback.capture());
         paymentCallback = argCallback.getValue();
         clearInvocations(paymentModule);
     }
@@ -133,10 +154,10 @@ public class VendingMachineAdapter extends ExecutionContext {
         paymentCallback.onSuccess();
         assertEquals(Operation.State.COLLECTING, operation.state);
 
-        int numTumThai = getAttribute("numTumThai").asInt();
-        int numTumPoo = getAttribute("numTumPoo").asInt();
+        int numTumThaiExpected = getAttribute("numTumThai").asInt();
+        int numTumPooExpected = getAttribute("numTumPoo").asInt();
         ArgumentCaptor<DispenserCollectCallback> argCallback = ArgumentCaptor.forClass(DispenserCollectCallback.class);
-        verify(dispenserModule).dispense(eq(numTumThai), eq(numTumPoo), argCallback.capture());
+        verify(dispenserModule).dispense(eq(numTumThaiExpected), eq(numTumPooExpected), argCallback.capture());
         dispenserCollectCallback = argCallback.getValue();
         clearInvocations(dispenserModule);
     }
