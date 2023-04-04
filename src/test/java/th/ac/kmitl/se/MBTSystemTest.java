@@ -4,10 +4,9 @@ import org.graphwalker.java.test.*;
 import org.graphwalker.core.machine.Context;
 import org.graphwalker.core.condition.*;
 import org.graphwalker.core.generator.*;
-import org.graphwalker.websocket.WebSocketServer;
 import org.junit.jupiter.api.*;
 
-class OperationTest {
+class MBTSystemTest {
 
     @BeforeEach
     void setUp() {
@@ -20,7 +19,6 @@ class OperationTest {
         context.setPathGenerator(new RandomPath(new EdgeCoverage(100)));
 
         /* Uncomment the following three lines to enable GraphWalker player */
-        //VendingMachineAdapter.delay = 200;
         //WebSocketServer server = new WebSocketServer(8887, executor.getMachine());
         //server.start();
 
