@@ -17,7 +17,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class SystemTest {
     WebDriver driver;
     @BeforeAll
-    void setUp() {
+    static void setUp() {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
@@ -25,7 +25,7 @@ public class SystemTest {
         driver.get("https://fekmitl.pythonanywhere.com/kratai-bin");
     }
     @AfterAll
-    public void tearDown() {
+    static public void tearDown() {
         driver.quit();
     }
 
