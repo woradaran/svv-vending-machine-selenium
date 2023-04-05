@@ -16,7 +16,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 
-@Model(file  = "VendingMachineV1.json")
+@Model(file  = "VendingMachineV2.json")
 public class VendingMachineAdapter extends ExecutionContext {
     WebDriver driver;
     static final float PRICE_TUM_THAI = 100.0f;
