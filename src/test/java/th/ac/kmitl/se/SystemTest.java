@@ -15,15 +15,17 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class SystemTest {
-    WebDriver driver;
+    static WebDriver driver;
+    
     @BeforeAll
-    static void setUp() {
+    static public void setUp() {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         driver = new ChromeDriver(options);
         driver.get("https://fekmitl.pythonanywhere.com/kratai-bin");
     }
+
     @AfterAll
     static public void tearDown() {
         driver.quit();

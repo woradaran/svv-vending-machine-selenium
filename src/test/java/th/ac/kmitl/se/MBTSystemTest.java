@@ -8,10 +8,6 @@ import org.junit.jupiter.api.*;
 
 class MBTSystemTest {
 
-    @BeforeEach
-    void setUp() {
-    }
-
     @Test
     public void testMBT() throws java.io.IOException {
         TestExecutor executor = new TestExecutor(VendingMachineAdapter.class);
